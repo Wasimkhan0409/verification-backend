@@ -3,5 +3,5 @@ node_modules/
 .env
 # Other common files to ignore
 
-.vercel
+
 .env.local
