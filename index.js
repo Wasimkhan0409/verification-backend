@@ -1,8 +1,9 @@
 require("dotenv").config();
 const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
 const serverless = require("serverless-http");
+const cors = require("cors");
+
+const connectToDatabase = require("./lib/db");
 const UserData = require("./models/UserData");
 
 const app = express();
@@ -16,14 +17,14 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// MongoDB
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ MongoDB Connected"))
-  .catch(err => console.error("❌ MongoDB connection error:", err));
-
-// Route
+// ✅ This is your main route
 app.get("/fetch/:id", async (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+
   try {
+    // 👇 Ensure DB is connected efficiently
+    await connectToDatabase();
+
     const { id } = req.params;
     const data = await UserData.findOne({ id });
     if (data) {
@@ -37,5 +38,5 @@ app.get("/fetch/:id", async (req, res) => {
   }
 });
 
-// ✅ Serverless export for Vercel
+// 👇 Export for Vercel Serverless
 module.exports = serverless(app);
