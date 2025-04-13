@@ -13,7 +13,7 @@ const userDataSchema = new mongoose.Schema({
   model: String,
   company: String,
   trainingLocation: String,
-  trainer: String
+  trainer: String,
 });
 
 export default mongoose.models.UserData || mongoose.model("UserData", userDataSchema);
