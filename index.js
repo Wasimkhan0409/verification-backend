@@ -8,7 +8,7 @@ const app = express();
 
 // CORS settings
 const corsOptions = {
-  origin: ['https://fortesting1212.netlify.app', 'http://localhost:3000'],
+  origin: ['https://qrcode-vert-six.vercel.app/', 'http://localhost:3000'],
   methods: ['GET'],
   allowedHeaders: ['Content-Type'],
 };
