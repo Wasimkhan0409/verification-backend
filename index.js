@@ -4,51 +4,38 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const UserData = require("./models/UserData");
 
-const app = express(); // ✅ Move this above `app.use(...)`
+const app = express();
 
-// Define CORS options
+// CORS settings
 const corsOptions = {
-  origin: 'https://fortesting1212.netlify.app',  // Use your actual Netlify URL here
+  origin: ['https://fortesting1212.netlify.app', 'http://localhost:5000'],
   methods: ['GET'],
   allowedHeaders: ['Content-Type'],
 };
 
-// Use the CORS middleware with the options
 app.use(cors(corsOptions));
-
 app.use(express.json());
 
-// Connect to MongoDB
+// MongoDB Connection
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log("✅ MongoDB Connected");
+  .then(() => console.log("✅ MongoDB Connected"))
+  .catch(err => console.error("❌ MongoDB connection error:", err));
 
-    // Route to fetch data by unique ID
-    app.get("/fetch/:id", async (req, res) => {
-      try {
-        const { id } = req.params;
-        console.log("Searching for ID:", id);
+// Route
+app.get("/fetch/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const data = await UserData.findOne({ id });
+    if (data) {
+      res.json(data);
+    } else {
+      res.status(404).send("❌ No data found.");
+    }
+  } catch (error) {
+    console.error("❌ Error fetching data:", error);
+    res.status(500).send("❌ Internal Server Error");
+  }
+});
 
-        const data = await UserData.findOne({ id });
-        console.log("Result:", data);
-
-        if (data) {
-          res.json(data);
-        } else {
-          res.status(404).send("❌ No data found with the given ID.");
-        }
-      } catch (error) {
-        console.error("Fetch Error:", error);
-        res.status(500).send("❌ Error fetching data.");
-      }
-    });
-
-    // Start the server
-    app.listen(5000, "0.0.0.0", () => {
-      console.log("🚀 Server running on all interfaces at port 5000");
-    });
-
-  })
-  .catch((err) => {
-    console.error("❌ MongoDB connection error:", err);
-  });
+// Export for Vercel serverless function
+module.exports = app;
