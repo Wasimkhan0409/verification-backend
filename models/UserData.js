@@ -1,4 +1,5 @@
-const mongoose = require("mongoose");
+// models/UserData.js
+import mongoose from "mongoose";
 
 const userDataSchema = new mongoose.Schema({
   deliverableId: String,
@@ -15,5 +16,4 @@ const userDataSchema = new mongoose.Schema({
   trainer: String
 });
 
-// Avoid re-registering the model during hot reloads
-module.exports = mongoose.models.userdatas || mongoose.model("userdatas", userDataSchema);
+export default mongoose.models.UserData || mongoose.model("UserData", userDataSchema);

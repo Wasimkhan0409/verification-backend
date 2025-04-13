@@ -1,40 +1,28 @@
-const mongoose = require("mongoose");
-const UserData = require("../../models/UserData");
+import mongoose from "mongoose";
+import UserData from "../../models/UserData"; // adjust path if needed
 
-// Cached DB connection
-let cached = global.mongoose;
+const connectDB = async () => {
+  if (mongoose.connections[0].readyState) return;
 
-if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null };
-}
-
-async function connectToDatabase() {
-  if (cached.conn) return cached.conn;
-
-  if (!cached.promise) {
-    cached.promise = mongoose.connect(process.env.MONGO_URI, {
-      bufferCommands: false,
-    });
-  }
-
-  cached.conn = await cached.promise;
-  return cached.conn;
-}
+  await mongoose.connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  });
+};
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   if (req.method !== "GET") {
     return res.status(405).json({ message: "Method Not Allowed" });
   }
 
   try {
-    await connectToDatabase();
+    await connectDB(); // connect to MongoDB Atlas
 
-    const {
-      query: { id },
-    } = req;
-
+    const { id } = req.query;
     const data = await UserData.findOne({ id });
 
     if (!data) {
@@ -43,7 +31,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json(data);
   } catch (error) {
-    console.error("❌ API Error:", error);
+    console.error("API Error:", error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 }
