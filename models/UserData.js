@@ -15,4 +15,5 @@ const userDataSchema = new mongoose.Schema({
   trainer: String
 });
 
-module.exports = mongoose.model("userdatas", userDataSchema);
+// Avoid re-registering the model during hot reloads
+module.exports = mongoose.models.userdatas || mongoose.model("userdatas", userDataSchema);
