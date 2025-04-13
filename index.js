@@ -2,11 +2,11 @@ require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const serverless = require("serverless-http");
 const UserData = require("./models/UserData");
 
 const app = express();
 
-// CORS settings
 const corsOptions = {
   origin: ['https://qrcode-vert-six.vercel.app', 'http://localhost:3000'],
   methods: ['GET'],
@@ -16,7 +16,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// MongoDB Connection
+// MongoDB
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB Connected"))
   .catch(err => console.error("❌ MongoDB connection error:", err));
@@ -37,5 +37,5 @@ app.get("/fetch/:id", async (req, res) => {
   }
 });
 
-// Export for Vercel serverless function
-module.exports = app;
+// ✅ Serverless export for Vercel
+module.exports = serverless(app);
