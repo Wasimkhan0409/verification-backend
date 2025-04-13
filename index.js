@@ -6,7 +6,16 @@ const UserData = require("./models/UserData");
 
 const app = express(); // ✅ Move this above `app.use(...)`
 
-app.use(cors());
+// Define CORS options
+const corsOptions = {
+  origin: 'https://fortesting1212.netlify.app',  // Use your actual Netlify URL here
+  methods: ['GET'],
+  allowedHeaders: ['Content-Type'],
+};
+
+// Use the CORS middleware with the options
+app.use(cors(corsOptions));
+
 app.use(express.json());
 
 // Connect to MongoDB
@@ -38,7 +47,7 @@ mongoose.connect(process.env.MONGO_URI)
     app.listen(5000, "0.0.0.0", () => {
       console.log("🚀 Server running on all interfaces at port 5000");
     });
-    
+
   })
   .catch((err) => {
     console.error("❌ MongoDB connection error:", err);
