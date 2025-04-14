@@ -6,7 +6,16 @@ import cors from 'cors';
 dotenv.config();
 
 const app = express();
-app.use(cors());
+
+app.use(express.json());
+
+const corsOptions = {
+  origin: 'https://your-frontend-domain.com', // or http://localhost:3000
+  methods: ['GET'],
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 
 const mongoURI = process.env.MONGO_URI;
 
@@ -41,7 +50,6 @@ const userDataSchema = new mongoose.Schema({
 
 const UserData = mongoose.models.UserData || mongoose.model('UserData', userDataSchema);
 
-// This will allow GET /2467270621
 app.get('/:id', async (req, res) => {
   const { id } = req.params;
 
@@ -56,6 +64,10 @@ app.get('/:id', async (req, res) => {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
   }
+});
+
+app.get('/', (req, res) => {
+  res.send('API is running...');
 });
 
 app.listen(5000, () => console.log('🚀 Server running on port 5000'));
