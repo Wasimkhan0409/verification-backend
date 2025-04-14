@@ -10,7 +10,7 @@ const app = express();
 app.use(express.json());
 
 const corsOptions = {
-  origin: 'https://your-frontend-domain.com', // or http://localhost:3000
+  origin: 'https://qrcode-dun-two.vercel.app', // or http://localhost:3000
   methods: ['GET'],
   credentials: true,
 };
