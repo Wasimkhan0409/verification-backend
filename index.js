@@ -1,4 +1,12 @@
+import express from 'express';
 import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+import cors from 'cors';
+
+dotenv.config();
+
+const app = express();
+app.use(cors());
 
 const mongoURI = process.env.MONGO_URI;
 
@@ -33,37 +41,21 @@ const userDataSchema = new mongoose.Schema({
 
 const UserData = mongoose.models.UserData || mongoose.model('UserData', userDataSchema);
 
-export default async function handler(req, res) {
-  // ✅ CORS Headers
-  res.setHeader('Access-Control-Allow-Origin', '*'); // Or restrict to your frontend domain
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  // ✅ Handle preflight request
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
-  }
-
-  const { id } = req.query;
-  if (!id) {
-    return res.status(400).json({ error: 'Missing ID' });
-  }
+// This will allow GET /2467270621
+app.get('/:id', async (req, res) => {
+  const { id } = req.params;
 
   try {
     await connectDB();
     const user = await UserData.findOne({ id });
 
-    if (!user) {
-      return res.status(404).json({ error: 'No data found' });
-    }
+    if (!user) return res.status(404).json({ error: 'No data found' });
 
-    return res.status(200).json(user);
+    res.status(200).json(user);
   } catch (err) {
-    console.error("❌ Error fetching data:", err);
-    return res.status(500).json({ error: 'Server error' });
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
   }
-}
+});
+
+app.listen(5000, () => console.log('🚀 Server running on port 5000'));
