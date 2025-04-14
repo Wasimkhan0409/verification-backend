@@ -1,9 +1,7 @@
 import mongoose from 'mongoose';
-import cors from 'cors';
 
 const mongoURI = process.env.MONGO_URI;
 
-// Connect to MongoDB
 const connectDB = async () => {
   if (mongoose.connection.readyState === 1) return;
   try {
@@ -18,7 +16,6 @@ const connectDB = async () => {
   }
 };
 
-// Define schema/model
 const userDataSchema = new mongoose.Schema({
   deliverableId: String,
   publishedOn: String,
@@ -36,39 +33,37 @@ const userDataSchema = new mongoose.Schema({
 
 const UserData = mongoose.models.UserData || mongoose.model('UserData', userDataSchema);
 
-// CORS setup
-const corsOptions = {
-  origin: '*',
-  methods: ['GET'],
-  allowedHeaders: ['Content-Type'],
-};
-
-// Main handler
 export default async function handler(req, res) {
-  cors(corsOptions)(req, res, async () => {
-    console.log("🌐 Incoming request...");
-    
-    if (req.method !== 'GET') {
-      return res.status(405).json({ error: 'Method Not Allowed' });
+  // ✅ Allow all origins for CORS
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  // Handle preflight request
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
+
+  const { id } = req.query;
+  if (!id) {
+    return res.status(400).json({ error: 'Missing ID' });
+  }
+
+  try {
+    await connectDB();
+    const user = await UserData.findOne({ id });
+
+    if (!user) {
+      return res.status(404).json({ error: 'No data found' });
     }
 
-    const { id } = req.query;
-    if (!id) {
-      return res.status(400).json({ error: 'Missing ID' });
-    }
-
-    try {
-      await connectDB();
-      const user = await UserData.findOne({ id });
-
-      if (!user) {
-        return res.status(404).json({ error: 'No data found' });
-      }
-
-      return res.status(200).json(user);
-    } catch (err) {
-      console.error("❌ Error fetching data:", err);
-      return res.status(500).json({ error: 'Server error' });
-    }
-  });
+    return res.status(200).json(user);
+  } catch (err) {
+    console.error("❌ Error fetching data:", err);
+    return res.status(500).json({ error: 'Server error' });
+  }
 }
