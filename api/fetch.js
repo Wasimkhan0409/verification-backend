@@ -1,9 +1,10 @@
 import mongoose from 'mongoose';
 import cors from 'cors';
 
-// Connect to MongoDB
 const mongoURI = process.env.MONGO_URI;
+const apiSecret = process.env.API_SECRET;
 
+// Connect to MongoDB
 const connectDB = async () => {
   if (mongoose.connection.readyState === 1) return;
   try {
@@ -11,14 +12,14 @@ const connectDB = async () => {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
-    console.log("✅ MongoDB connected successfully!");
+    console.log("✅ MongoDB connected");
   } catch (err) {
-    console.error("❌ MongoDB connection error:", err);
-    throw new Error("Database connection failed");
+    console.error("❌ DB Connection Error:", err);
+    throw new Error("DB connection failed");
   }
 };
 
-// Mongoose schema
+// Define schema/model
 const userDataSchema = new mongoose.Schema({
   deliverableId: String,
   publishedOn: String,
@@ -36,46 +37,55 @@ const userDataSchema = new mongoose.Schema({
 
 const UserData = mongoose.models.UserData || mongoose.model('UserData', userDataSchema);
 
-// CORS config
+// CORS setup
 const corsOptions = {
-  origin: '*', // <-- Development only: allows Postman, browser, etc.
+  origin: '*', // Allow all origins (for testing)
   methods: ['GET'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 };
 
 // Main handler
 export default async function handler(req, res) {
-  console.log("🔍 Incoming request:", {
-    method: req.method,
-    url: req.url,
-    headers: req.headers,
-  });
-
   // Apply CORS
   cors(corsOptions)(req, res, async () => {
+    // Log for debug
+    console.log("🔐 Incoming request...");
+    console.log("🔐 Headers:", req.headers);
+    console.log("🔐 Expected Secret:", apiSecret); // for debugging — REMOVE this in production!
+
     if (req.method !== 'GET') {
-      return res.status(405).json({ error: 'Method not allowed' });
+      return res.status(405).json({ error: 'Method Not Allowed' });
+    }
+
+    // AUTH CHECK
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      console.log("❌ No Authorization header");
+      return res.status(401).json({ error: 'Unauthorized - No token' });
+    }
+
+    if (authHeader !== `Bearer ${apiSecret}`) {
+      console.log("❌ Invalid token:", authHeader);
+      return res.status(401).json({ error: 'Unauthorized - Invalid token' });
     }
 
     const { id } = req.query;
-
     if (!id) {
-      return res.status(400).json({ error: 'ID is required' });
+      return res.status(400).json({ error: 'Missing ID' });
     }
 
     try {
       await connectDB();
-
       const user = await UserData.findOne({ id });
 
       if (!user) {
-        return res.status(404).json({ error: 'No data found for the given ID' });
+        return res.status(404).json({ error: 'No data found' });
       }
 
       return res.status(200).json(user);
     } catch (err) {
-      console.error('❌ Error fetching user data:', err);
-      return res.status(500).json({ error: 'Internal Server Error' });
+      console.error("❌ Error fetching data:", err);
+      return res.status(500).json({ error: 'Server error' });
     }
   });
 }
