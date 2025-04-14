@@ -2,7 +2,6 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 
 const mongoURI = process.env.MONGO_URI;
-const apiSecret = process.env.API_SECRET;
 
 // Connect to MongoDB
 const connectDB = async () => {
@@ -39,34 +38,18 @@ const UserData = mongoose.models.UserData || mongoose.model('UserData', userData
 
 // CORS setup
 const corsOptions = {
-  origin: '*', // Allow all origins (for testing)
+  origin: '*',
   methods: ['GET'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type'],
 };
 
 // Main handler
 export default async function handler(req, res) {
-  // Apply CORS
   cors(corsOptions)(req, res, async () => {
-    // Log for debug
-    console.log("🔐 Incoming request...");
-    console.log("🔐 Headers:", req.headers);
-    console.log("🔐 Expected Secret:", apiSecret); // for debugging — REMOVE this in production!
-
+    console.log("🌐 Incoming request...");
+    
     if (req.method !== 'GET') {
       return res.status(405).json({ error: 'Method Not Allowed' });
-    }
-
-    // AUTH CHECK
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      console.log("❌ No Authorization header");
-      return res.status(401).json({ error: 'Unauthorized - No token' });
-    }
-
-    if (authHeader !== `Bearer ${apiSecret}`) {
-      console.log("❌ Invalid token:", authHeader);
-      return res.status(401).json({ error: 'Unauthorized - Invalid token' });
     }
 
     const { id } = req.query;
