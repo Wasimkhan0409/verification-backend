@@ -10,7 +10,7 @@ const app = express();
 app.use(express.json());
 
 const corsOptions = {
-  origin: 'www.bureauveratas.com', // or http://localhost:3000
+  origin: 'https://www.bureauveratas.com', // or http://localhost:3000
   methods: ['GET'],
   credentials: true,
 };
