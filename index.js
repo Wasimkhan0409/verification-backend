@@ -20,7 +20,7 @@ app.use(cors(corsOptions));
 // Mongo URI
 const mongoURI = process.env.MONGO_URI;
 
-// Connect Mongo
+// Connect to MongoDB
 const connectDB = async () => {
   if (mongoose.connection.readyState === 1) return;
   try {
@@ -35,7 +35,7 @@ const connectDB = async () => {
   }
 };
 
-// Schema
+// Schema for user data
 const userDataSchema = new mongoose.Schema({
   deliverableId: String,
   publishedOn: String,
@@ -52,23 +52,11 @@ const userDataSchema = new mongoose.Schema({
 });
 const UserData = mongoose.models.UserData || mongoose.model('UserData', userDataSchema);
 
-// 🔐 Encryption Utils
+// 🔐 Encryption/Decryption Utils
 
-const SECRET_KEY = 'super-secret-password'; // Should be strong & from .env
+const SECRET_KEY = 'super-secret-password'; // Same as in your React app
 
-// Create encrypted token (you can use this in your admin panel or script)
-function encryptID(id) {
-  const salt = crypto.randomBytes(16);
-  const iv = crypto.randomBytes(16);
-  const key = crypto.scryptSync(SECRET_KEY, salt, 32);
-  const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
-  let encrypted = cipher.update(id.toString(), 'utf8', 'base64');
-  encrypted += cipher.final('base64');
-  const payload = Buffer.concat([salt, iv, Buffer.from(encrypted, 'base64')]);
-  return payload.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
-
-// Decrypt token from URL
+// Function to decrypt the encrypted ID (slug)
 function decryptID(slug) {
   const raw = Buffer.from(slug.replace(/-/g, '+').replace(/_/g, '/'), 'base64');
   const salt = raw.subarray(0, 16);
@@ -83,23 +71,27 @@ function decryptID(slug) {
 
 // ✅ Routes
 
-// Ping
+// Ping the API
 app.get('/', (req, res) => {
   res.send('API is running...');
 });
 
-// 🔍 Fetch certificate by encrypted slug
+// Fetch certificate by decrypted ID
 app.get('/:id', async (req, res) => {
   const { id: encryptedId } = req.params;
 
   try {
     await connectDB();
 
-    const originalId = decryptID(encryptedId); // Convert long token to original ID
+    // Step 1: Decrypt the ID from the URL
+    const originalId = decryptID(encryptedId);
+    console.log('🔓 Decrypted ID:', originalId);  // Logs the decrypted ID for debugging
 
+    // Step 2: Look up the user data by decrypted ID
     const user = await UserData.findOne({ id: originalId });
     if (!user) return res.status(404).json({ error: 'No data found' });
 
+    // Step 3: Respond with user data
     res.status(200).json(user);
   } catch (err) {
     console.error("❌ Error fetching data:", err);
@@ -107,5 +99,5 @@ app.get('/:id', async (req, res) => {
   }
 });
 
-// Start server
+// Start the server
 app.listen(5000, () => console.log('🚀 Server running on port 5000'));
